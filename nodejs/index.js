@@ -62,28 +62,33 @@ exports.handle_roulette = function(event, context, callback) {
         encoding: null
     };
 
+    var roulette_data = [];
+
     var money_type;
     var bat_point;
 
-    money_type_rand = Math.floor(Math.random() * 100);
-    bat_point_rand = Math.floor(Math.random() * 100);
-
-    if (money_type_rand < 40) {
-        money_type = "point";
-    } else {
-        money_type = "cash";
-    }
-
-    if (bat_point_rand < 10) {
-        bat_point = -30;
-    } else if (bat_point_rand < 20) {
-        bat_point = -15;
-    } else if (bat_point_rand < 50) {
-        bat_point = 15;
-    } else if (bat_point_rand < 80) {
-        bat_point = 30;
-    } else {
-        bat_point = 45;
+    for (var i = 0; i < 6; i++) {
+        money_type_rand = Math.floor(Math.random() * 100);
+        bat_point_rand = Math.floor(Math.random() * 100);
+    
+        if (money_type_rand < 40) {
+            money_type = "point";
+        } else {
+            money_type = "cash";
+        }
+    
+        if (bat_point_rand < 10) {
+            bat_point = -30;
+        } else if (bat_point_rand < 20) {
+            bat_point = -15;
+        } else if (bat_point_rand < 50) {
+            bat_point = 15;
+        } else if (bat_point_rand < 80) {
+            bat_point = 30;
+        } else {
+            bat_point = 45;
+        }
+        roulette_data.push({money_type: money_type, bat_point: bat_point});
     }
 
     var rewardPage = {
@@ -113,18 +118,26 @@ exports.handle_roulette = function(event, context, callback) {
     }).then(function(html) {
         if (html.indexOf('/bbs/logout.php') > -1) {
             console.log("Login success");
-            return request(checkPage);
+            return roulette_data.reduce((promise, data) => {
+                return promise.then(() => {
+                    return request(checkPage);
+                }).then((html) => {
+                    console.log(html.toString());
+                    return sleep(5000);
+                }).then(() => {
+                    rewardPage.form.bat_point = data.bat_point;
+                    rewardPage.form.money_type = data.money_type;
+
+                    return request(rewardPage);
+                }).then((html) => {
+                    console.log(html.toString());
+                    console.log(data.bat_point, data.money_type);
+                    return sleep(1000);
+                });
+            }, Promise.resolve());
         } else {
             console.log(html.toString());
         }
-    }).then((html) => {
-        console.log(html.toString());
-        return sleep(5000);
-    }).then(() => {
-        return request(rewardPage);
-    }).then(function(html) {
-        console.log(html.toString());
-        console.log(bat_point, money_type);
     }).catch(function(error) {
         if (error) {
             throw error;
