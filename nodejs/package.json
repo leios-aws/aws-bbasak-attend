@@ -1,16 +1,19 @@
 {
   "name": "aws-bbasak-attend",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "node -e \"require('./index.js').handler({key1: 'value1', key2: 'value2', key3: 'value3'})\""
+    "test": "node -e \"require('./index.js').handler({key1: 'value1', key2: 'value2', key3: 'value3'})\"",
+    "roulette": "node -e \"require('./index.js').handle_roulette({key1: 'value1', key2: 'value2', key3: 'value3'})\""
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "cheerio": "^1.0.0-rc.3",
     "config": "^3.1.0",
     "request": "^2.88.0",
-    "request-promise": "^4.2.4"
+    "request-promise": "^4.2.4",
+    "sleep-promise": "^8.0.1"
   }
 }
