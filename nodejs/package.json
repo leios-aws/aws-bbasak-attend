@@ -1,6 +1,6 @@
 {
   "name": "aws-bbasak-attend",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -11,7 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "cheerio": "^1.0.0-rc.3",
-    "config": "^3.1.0",
+    "config": "^3.2.1",
     "request": "^2.88.0",
     "request-promise": "^4.2.4",
     "sleep-promise": "^8.0.1"
