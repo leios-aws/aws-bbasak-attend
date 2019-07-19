@@ -215,8 +215,8 @@ exports.handler = function (event, context, callback) {
     async.waterfall([
         requestMainPage,
         requestLoginPage,
-        //requestAttendPage,
-        //requestAttendWritePage,
+        requestAttendPage,
+        requestAttendWritePage,
         requestRoulette,
     ], function (err) {
         if (err) {
