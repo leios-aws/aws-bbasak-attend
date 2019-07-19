@@ -146,8 +146,8 @@ var rouletteReward = function (response, body, callback) {
     var money_type;
     var bat_point;
 
-    money_type_rand = Math.floor(Math.random() * 100);
-    bat_point_rand = Math.floor(Math.random() * 100);
+    var money_type_rand = Math.floor(Math.random() * 100);
+    var bat_point_rand = Math.floor(Math.random() * 100);
 
     if (money_type_rand < 40) {
         money_type = "point";
@@ -208,7 +208,7 @@ var executeRoulette = function (index, callback) {
 var requestRoulette = function (response, body, callback) {
     async.timesSeries(15, executeRoulette, (err) => {
         callback(err);
-    })
+    });
 };
 
 exports.handler = function (event, context, callback) {
@@ -226,5 +226,5 @@ exports.handler = function (event, context, callback) {
         if (callback) {
             callback(null, 'Success');
         }
-    })
+    });
 };
