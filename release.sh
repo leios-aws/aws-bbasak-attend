@@ -4,7 +4,6 @@ if [ -z "$1" ]
 then
   CUR=`git describe --tags master | cut -d . -f1`
   RELEASE_VERSION=$(( $CUR + 1 )).0.0
-  echo $RELEASE_VERSION
 else 
   RELEASE_VERSION=$1
 fi
