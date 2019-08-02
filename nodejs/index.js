@@ -13,22 +13,25 @@ var req = request.defaults({
     jar: true,
     gzip: true,
     followAllRedirects: true,
-    encoding: null
+    //encoding: null
 });
 
-var requestMainPage = function (callback) {
+var requestMainPage = function (result,callback) {
     var option = {
         uri: 'http://bbasak.com/',
         method: 'GET',
     };
 
-    req(option, function (e, r, b) {
+    req(option, function (err, response, body) {
+        result.response = response;
+        result.body = body;
+
         console.log("Request Main Page");
-        callback(e, r, b);
+        callback(err, result);
     });
 };
 
-var requestLoginPage = function (response, body, callback) {
+var requestLoginPage = function (result, callback) {
     var authConfig = config.get('auth');
     var option = {
         uri: 'https://bbasak.com/bbs/login_check.php',
@@ -42,17 +45,20 @@ var requestLoginPage = function (response, body, callback) {
         },
     };
 
-    req(option, function (e, r, b) {
+    req(option, function (err, response, body) {
+        result.response = response;
+        result.body = body;
+
         console.log("Request Login Page");
-        if (!e && b.indexOf('/bbs/logout.php') < 0) {
-            callback("Login Fail!", r, b);
+        if (!err && body.indexOf('/bbs/logout.php') < 0) {
+            callback("Login Fail!", result);
         } else {
-            callback(e, r, b);
+            callback(err, result);
         }
     });
 };
 
-var requestAttendPage = function (response, body, callback) {
+var requestAttendPage = function (result, callback) {
     var option = {
         uri: 'http://bbasak.com/bbs/write.php?bo_table=com25',
         method: 'GET',
@@ -61,13 +67,16 @@ var requestAttendPage = function (response, body, callback) {
         },
     };
 
-    req(option, function (e, r, b) {
+    req(option, function (err, response, body) {
+        result.response = response;
+        result.body = body;
+
         console.log("Request Attend Page");
-        callback(e, r, b);
+        callback(err, result);
     });
 };
 
-var requestAttendWritePage = function (response, body, callback) {
+var requestAttendWritePage = function (result, callback) {
     var $ = cheerio.load(body);
     var option = {
         uri: 'http://bbasak.com/bbs/write_update.php',
@@ -100,12 +109,15 @@ var requestAttendWritePage = function (response, body, callback) {
         },
     };
 
-    req(option, function (e, r, b) {
+    req(option, function (err, response, body) {
+        result.response = response;
+        result.body = body;
+
         console.log("Request Attend Write Page");
-        if (!e && b.indexOf('<p>출석처리되었습니다.</p>') < 0) {
-            callback("Attend fail", r, b);
+        if (!err && body.indexOf('<p>출석처리되었습니다.</p>') < 0) {
+            callback("Attend fail", result);
         } else {
-            callback(e, r, b);
+            callback(err, result);
         }
     });
 };
@@ -123,37 +135,34 @@ var rouletteCheck = function (callback) {
         headers: {
             'Referer': 'http://bbasak.com/games/roulette_v2.php'
         },
+        json: true,
     };
 
-    req(option, function (e, r, b) {
+    req(option, function (err, response, body) {
+        result.response = response;
+        result.body = body;
+
         console.log("Roulette Check");
-        var status = JSON.parse(b);
-        if (!e && status.cnt < 0) {
-            callback(status, r, b);
+        if (!err && body.cnt < 0) {
+            callback(body, result);
         } else {
-            callback(e, r, b);
+            callback(err, result);
         }
     });
 };
 
-var roulettePreWait = function (response, body, callback) {
+var roulettePreWait = function (result, callback) {
     setTimeout(() => {
-        callback(null, response, body);
+        callback(null, result);
     }, 5000);
 };
 
-var rouletteReward = function (response, body, callback) {
+var rouletteReward = function (result, callback) {
     var money_type;
     var bat_point;
 
     var money_type_rand = Math.floor(Math.random() * 100);
     var bat_point_rand = Math.floor(Math.random() * 100);
-
-    if (money_type_rand < 40) {
-        money_type = "point";
-    } else {
-        money_type = "cash";
-    }
 
     if (bat_point_rand < 10) {
         bat_point = -30;
@@ -165,6 +174,14 @@ var rouletteReward = function (response, body, callback) {
         bat_point = 30;
     } else {
         bat_point = 45;
+    }
+
+    if (money_type_rand < 40) {
+        money_type = "point";
+        result.data.point += bat_point;
+    } else {
+        money_type = "cash";
+        result.data.cash += bat_point;
     }
 
     var option = {
@@ -179,18 +196,22 @@ var rouletteReward = function (response, body, callback) {
         headers: {
             'Referer': 'http://bbasak.com/games/roulette_v2.php'
         },
+        json: true,
     };
 
-    req(option, function (e, r, b) {
+    req(option, function (err, response, body) {
+        result.response = response;
+        result.body = body;
+
         console.log("Roulette Reward", bat_point, money_type);
-        console.log(JSON.parse(b));
-        callback(e, r, b);
+        console.log(body);
+        callback(err, result);
     });
 };
 
-var roulettePostWait = function (response, body, callback) {
+var roulettePostWait = function (result, callback) {
     setTimeout(() => {
-        callback(null, response, body);
+        callback(null, result);
     }, 1000);
 };
 
@@ -205,7 +226,7 @@ var executeRoulette = function (index, callback) {
     });
 };
 
-var requestRoulette = function (response, body, callback) {
+var requestRoulette = function (result, callback) {
     async.timesSeries(15, executeRoulette, (err) => {
         callback(err);
     });
@@ -213,18 +234,19 @@ var requestRoulette = function (response, body, callback) {
 
 exports.handler = function (event, context, callback) {
     async.waterfall([
+        function (callback) {
+            callback(null, { data: {point: 0, cash: 0} });
+        },
         requestMainPage,
         requestLoginPage,
         requestAttendPage,
         requestAttendWritePage,
         requestRoulette,
-    ], function (err) {
-        if (err) {
-            console.log(err);
-        }
+    ], function (err, result) {
+        console.log({err: err, data: result.data});
 
         if (callback) {
-            callback(null, 'Success');
+            callback(null);
         }
     });
 };
