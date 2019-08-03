@@ -16,7 +16,7 @@ var req = request.defaults({
     //encoding: null
 });
 
-var requestMainPage = function (result,callback) {
+var requestMainPage = function (result, callback) {
     var option = {
         uri: 'http://bbasak.com/',
         method: 'GET',
@@ -72,17 +72,22 @@ var requestAttendPage = function (result, callback) {
         result.body = body;
 
         console.log("Request Attend Page");
+
+        if (!err) {
+            var $ = cheerio.load(body);
+            result.uid = $('#fwrite > input[type=hidden]:nth-child(1)').val();
+        }
+
         callback(err, result);
     });
 };
 
 var requestAttendWritePage = function (result, callback) {
-    var $ = cheerio.load(body);
     var option = {
         uri: 'http://bbasak.com/bbs/write_update.php',
         method: 'POST',
         formData: {
-            uid: $('#fwrite > input[type=hidden]:nth-child(1)').val(),
+            uid: result.uid,
             w: "",
             bo_table: "com25",
             wr_id: 0,
@@ -122,7 +127,7 @@ var requestAttendWritePage = function (result, callback) {
     });
 };
 
-var rouletteCheck = function (callback) {
+var rouletteCheck = function (result, callback) {
     var option = {
         uri: 'http://bbasak.com/games/member_point_proc.php',
         method: 'POST',
@@ -152,7 +157,7 @@ var rouletteCheck = function (callback) {
 };
 
 var roulettePreWait = function (result, callback) {
-    setTimeout(() => {
+    setTimeout(function () {
         callback(null, result);
     }, 5000);
 };
@@ -210,32 +215,33 @@ var rouletteReward = function (result, callback) {
 };
 
 var roulettePostWait = function (result, callback) {
-    setTimeout(() => {
+    setTimeout(function () {
         callback(null, result);
     }, 1000);
 };
 
-var executeRoulette = function (index, callback) {
-    async.waterfall([
-        rouletteCheck,
-        roulettePreWait,
-        rouletteReward,
-        roulettePostWait,
-    ], function (err) {
-        callback(err);
-    });
-};
-
 var requestRoulette = function (result, callback) {
-    async.timesSeries(15, executeRoulette, (err) => {
-        callback(err);
+    async.timesSeries(15, function (index, callback) {
+        async.waterfall([
+            function (callback) {
+                callback(null, result);
+            },
+            rouletteCheck,
+            roulettePreWait,
+            rouletteReward,
+            roulettePostWait,
+        ], function (err) {
+            callback(err);
+        });
+    }, function (err) {
+        callback(err, result);
     });
 };
 
 exports.handler = function (event, context, callback) {
     async.waterfall([
         function (callback) {
-            callback(null, { data: {point: 0, cash: 0} });
+            callback(null, { data: { point: 0, cash: 0 } });
         },
         requestMainPage,
         requestLoginPage,
@@ -243,7 +249,7 @@ exports.handler = function (event, context, callback) {
         requestAttendWritePage,
         requestRoulette,
     ], function (err, result) {
-        console.log({err: err, data: result.data});
+        console.log({ err: err, data: result.data });
 
         if (callback) {
             callback(null);
